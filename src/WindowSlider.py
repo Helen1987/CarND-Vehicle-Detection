@@ -4,78 +4,92 @@ from .FeatureExtractor import FeatureExtractor
 
 
 class WindowSlider:
-    def __init__(self):
-        pass
+    def __init__(self, transformer, classifier, extractor):
+        self.svc = classifier
+        self.X_scaler = transformer
+        self.extractor = extractor
+        self.bounding_boxes = []
+        self.window = (64, 64)
+        self.pix_per_cell = 8
+        self.cells_per_window = (self.window//self.pix_per_cell)-1
 
-    @staticmethod
-    def convert_color(img, conv='RGB2YCrCb'):
-        if conv == 'RGB2YCrCb':
-            return cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-        if conv == 'BGR2YCrCb':
-            return cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-        if conv == 'RGB2LUV':
-            return cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
+    # find all windows in region with specified overlap
+    # assume that region is scaled already
+    def slide_window(self, region_shape, xy_overlap=(0.5, 0.5)):
+        window_list = []
 
-    def find_cars(self, img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell,
-                  cell_per_block, spatial_size, hist_bins):
-        img = img.astype(np.float32) / 255
-
-        img_tosearch = img[ystart:ystop, :, :]
-        ctrans_tosearch = WindowSlider.convert_color(img_tosearch, conv='RGB2YCrCb')
-        if scale != 1:
-            imshape = ctrans_tosearch.shape
-            ctrans_tosearch = cv2.resize(ctrans_tosearch, (np.int(imshape[1] / scale), np.int(imshape[0] / scale)))
-
-        ch1 = ctrans_tosearch[:, :, 0]
-        ch2 = ctrans_tosearch[:, :, 1]
-        ch3 = ctrans_tosearch[:, :, 2]
+        # Instead of overlap, define how many cells to step
+        cells_per_step = np.int(self.cells_per_window*(1-xy_overlap))
 
         # Define blocks and steps as above
-        nxblocks = (ch1.shape[1] // pix_per_cell) - 1
-        nyblocks = (ch1.shape[0] // pix_per_cell) - 1
-        nfeat_per_block = orient * cell_per_block ** 2
-        # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
-        window = 64
-        nblocks_per_window = (window // pix_per_cell) - 1
-        cells_per_step = 2  # Instead of overlap, define how many cells to step
-        nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
-        nysteps = (nyblocks - nblocks_per_window) // cells_per_step
+        n_x_cells = (region_shape[1] // self.pix_per_cell) - 1
+        n_y_cells = (region_shape[0] // self.pix_per_cell) - 1
 
-        # Compute individual channel HOG features for the entire image
-        hog1 = FeatureExtractor.get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
-        hog2 = FeatureExtractor.get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
-        hog3 = FeatureExtractor.get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
+        # Compute the number of windows in x/y
+        n_x_steps = (n_x_cells - self.cells_per_window[0]) // cells_per_step[0]
+        n_y_steps = (n_y_cells - self.cells_per_window[1]) // cells_per_step[1]
 
-        for xb in range(nxsteps):
-            for yb in range(nysteps):
-                ypos = yb * cells_per_step
-                xpos = xb * cells_per_step
-                # Extract HOG for this patch
-                hog_feat1 = hog1[ypos:ypos + nblocks_per_window, xpos:xpos + nblocks_per_window].ravel()
-                hog_feat2 = hog2[ypos:ypos + nblocks_per_window, xpos:xpos + nblocks_per_window].ravel()
-                hog_feat3 = hog3[ypos:ypos + nblocks_per_window, xpos:xpos + nblocks_per_window].ravel()
-                hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+        # Loop through finding x and y window positions
+        # Note: you could vectorize this step, but in practice
+        # you'll be considering windows one by one with your
+        # classifier, so looping makes sense
+        for y in range(n_y_steps):
+            for x in range(n_x_steps):
+                # Calculate window position (for HOG)
+                x_pos = x*cells_per_step
+                y_pos = y*cells_per_step
+                # Calculate window scaled coordinates
+                x_start = x_pos*self.pix_per_cell
+                y_start = y_pos*self.pix_per_cell
 
-                xleft = xpos * pix_per_cell
-                ytop = ypos * pix_per_cell
+                window_list.append(((x_pos, y_pos), (x_start, y_start)))
 
-                # Extract the image patch
-                subimg = cv2.resize(ctrans_tosearch[ytop:ytop + window, xleft:xleft + window], (64, 64))
+        return window_list
 
-                # Get color features
-                spatial_features = FeatureExtractor.bin_spatial(subimg, size=spatial_size)
-                hist_features = FeatureExtractor.color_hist(subimg, nbins=hist_bins)
+    # function find windows on particular area which presumably contains cars
+    def find_hot_windows(self, scale, img, x_start_stop=[None, None], y_start_stop=[None, None],
+                         xy_overlap=(0.5, 0.5)):
+        # If x and/or y start/stop positions not defined, set to image size
+        if x_start_stop[0] is None:
+            x_start_stop[0] = 0
+        if x_start_stop[1] is None:
+            x_start_stop[1] = img.shape[1]
+        if y_start_stop[0] is None:
+            y_start_stop[0] = 0
+        if y_start_stop[1] is None:
+            y_start_stop[1] = img.shape[0]
 
-                # Scale features and make a prediction
-                test_features = X_scaler.transform(
-                    np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
-                # test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))
-                test_prediction = svc.predict(test_features)
+        img_to_search = img[y_start_stop[0]:y_start_stop[1], x_start_stop[0]:x_start_stop[1], :]
+        converted_image = FeatureExtractor.convert_color(img_to_search, conv='RGB2YCrCb')
+        if scale != 1:
+            scaled_image = cv2.resize(converted_image, np.int(img_to_search.shape/scale))
+        else:
+            scaled_image = converted_image
 
-                if test_prediction == 1:
-                    xbox_left = np.int(xleft * scale)
-                    ytop_draw = np.int(ytop * scale)
-                    win_draw = np.int(window * scale)
-                    return (xbox_left, ytop_draw + ystart), (xbox_left + win_draw, ytop_draw + win_draw + ystart)
+        # precalculate HOG features
+        self.extractor.extract_hog_features_from_img(scaled_image, feature_vec=False)
 
-        return (0, 0), (0, 0)
+        windows = self.slide_window(scaled_image.shape, xy_overlap=xy_overlap)
+        for (x_pos, y_pos), (x_start, y_start) in windows:
+            window_img = cv2.resize(scaled_image[x_start:x_start+self.window[0], y_start:y_start+self.window[1]], self.window)
+            features = self.extractor.extract_features(window_img, y_pos, x_pos, self.cells_per_window)
+
+            scaled_features = self.X_scaler.transform(features)
+            test_prediction = self.svc.predict(scaled_features)
+
+            if test_prediction == 1:
+                x_top_left = np.int(x_start*scale)
+                y_top_left = np.int(y_start*scale)
+                win_draw = np.int(self.window*scale)
+                self.bounding_boxes.append([
+                    x_top_left, y_top_left,
+                    x_top_left+win_draw[0]+x_start_stop[0],
+                    y_top_left+win_draw[1]+y_start_stop[0]
+                ])
+
+    def find_cars(self, img):
+        scale_and_region = []
+        for scale, region in scale_and_region:
+            self.find_hot_windows(scale, img, region[0], region[1])
+
+        return self.bounding_boxes

@@ -5,9 +5,9 @@ from .WindowSlider import WindowSlider
 
 
 class VehicleDetector:
-    def __init__(self):
+    def __init__(self, slider):
         self.heatmap = np.array([])
-        self.slider = WindowSlider()
+        self.slider = slider
 
     def add_heat(self, bbox_list):
         # Iterate through list of bboxes
@@ -21,9 +21,9 @@ class VehicleDetector:
         self.heatmap[self.heatmap <= threshold] = 0
 
     def run_detector(self, image):
-        box_list = self.slider.find_cars(image)
+        box_list = self.slider.find_cars(image, 400, 656, 1.5, )
 
-        self.heatmap([])
+        self.heatmap = np.array([])
         self.add_heat(box_list)
         self.apply_threshold(1)
 

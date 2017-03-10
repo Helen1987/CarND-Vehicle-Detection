@@ -5,14 +5,16 @@ from moviepy.editor import VideoFileClip
 
 from .Frame import Frame
 from .VehicleDetector import VehicleDetector
+from .WindowSlider import WindowSlider
 
 
 class Video:
-    def __init__(self, path, output_folder,  ):
+    def __init__(self, path, output_folder, transformer, svm_classifier, feature_extractor):
         # calibrate the camera
         self.path = path
         self.output_folder = os.path.join(os.getcwd(), output_folder)
-        self.vehicle_detector = VehicleDetector()
+        self.vehicle_detector = VehicleDetector(
+            WindowSlider(transformer, svm_classifier, feature_extractor))
 
     def handle_frame(self, image):
         try:
