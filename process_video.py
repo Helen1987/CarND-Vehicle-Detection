@@ -2,7 +2,7 @@ import pickle
 import argparse
 from src.Video import Video
 
-from .FeatureExtractor import FeatureExtractor
+from src.FeatureExtractor import FeatureExtractor
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Video Processing')
@@ -31,16 +31,16 @@ if __name__ == '__main__':
     features = svc_pickle["features"]  # color, space, hog
     color_space = svc_pickle["color_space"]
 
-    feature_extractor = FeatureExtractor(features, color_space)
+    feature_extractor = FeatureExtractor(features[0], features[1], features[2], color_space)
     svc = svc_pickle["svc"]
     X_scaler = svc_pickle["X_scaler"]
 
     if features[0]:  # color features
-        hist_bins = svc_pickle["hist_bins"]
+        hist_bins = svc_pickle["histbin"]
         hist_range = svc_pickle["hist_range"]
         feature_extractor.init_color_parameters(hist_bins, hist_range)
     if features[1]:  # space features
-        spatial_size = svc_pickle["spatial_size"]
+        spatial_size = svc_pickle["spatial"]
         feature_extractor.init_space_parameters(spatial_size)
     if features[2]:
         orient = svc_pickle["orient"]

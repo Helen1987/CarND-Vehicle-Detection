@@ -1,11 +1,11 @@
-import matplotlib.image as mpimg
 import numpy as np
+import matplotlib.image as mpimg
 import cv2
 from skimage.feature import hog
 
 
 class FeatureExtractor:
-    def __init__(self, use_hog, use_color, use_space, color_space):
+    def __init__(self, use_color, use_space, use_hog, color_space):
         self.use_HOG = use_hog
         self.use_color = use_color
         self.use_space = use_space
@@ -42,17 +42,17 @@ class FeatureExtractor:
         hog_features = np.array([])
 
         if self.use_space:
-            spatial_features = FeatureExtractor.bin_spatial(img, self.spatial_size)
+            spatial_features = FeatureExtractor.bin_spatial(img, (self.spatial_size, self.spatial_size))
         if self.use_color:
             hist_features = FeatureExtractor.color_hist(img, self.hist_bins, self.hist_range)
         if self.use_HOG:
-            hog_features = FeatureExtractor.get_precalculated_hog_features(
+            hog_features = self.get_precalculated_hog_features(
                 ypos, xpos, n_blocks_per_window)
 
         return np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1)
 
     @staticmethod
-    def conver_color(image, color_space):
+    def convert_color(image, color_space):
         if color_space != 'RGB':
             if color_space == 'HSV':
                 feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
@@ -67,6 +67,9 @@ class FeatureExtractor:
         else:
             feature_image = np.copy(image)
         return feature_image
+
+    def convert(self, image):
+        return FeatureExtractor.convert_color(image, self.color_space)
 
     @staticmethod
     def bin_spatial(img, size=(32, 32)):
@@ -135,21 +138,23 @@ class FeatureExtractor:
     def extract_hog_features(self, images):
         features = []
         for file in images:
-            image = mpimg.imread(file)
+            image = cv2.imread(file)
+            rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-            feature_image = FeatureExtractor.conver_color(image, self.color_space)
+            feature_image = FeatureExtractor.convert_color(rgb_image, self.color_space)
             hog_features = self.extract_hog_features_from_img(feature_image)
             features.append(hog_features)
 
         return features
 
     @staticmethod
-    def extract_features(imgs, cspace='RGB', spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256)):
+    def extract_features_from_images(imgs, cspace='RGB', spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256)):
         features = []
         for file in imgs:
-            image = mpimg.imread(file)
+            image = cv2.imread(file)
+            rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-            feature_image = FeatureExtractor.conver_color(image, cspace)
+            feature_image = FeatureExtractor.convert_color(rgb_image, cspace)
             # Apply bin_spatial() to get spatial color features
             spatial_features = FeatureExtractor.bin_spatial(feature_image, size=spatial_size)
             # Apply color_hist() also with a color space option now

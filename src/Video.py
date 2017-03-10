@@ -1,5 +1,6 @@
 import os
 import sys
+import cv2
 import matplotlib.image as mpimg
 from moviepy.editor import VideoFileClip
 

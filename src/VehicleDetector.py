@@ -21,9 +21,9 @@ class VehicleDetector:
         self.heatmap[self.heatmap <= threshold] = 0
 
     def run_detector(self, image):
-        box_list = self.slider.find_cars(image, 400, 656, 1.5, )
+        box_list = self.slider.find_cars(image)
 
-        self.heatmap = np.array([])
+        self.heatmap = np.zeros_like(image[:,:,0]).astype(np.float)
         self.add_heat(box_list)
         self.apply_threshold(1)
 
