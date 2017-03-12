@@ -35,7 +35,7 @@ class VehicleDetector:
         self.add_heat(box_list)
 
         # remove noise
-        self.apply_threshold(self.current_heatmap, 2)
+        self.apply_threshold(self.current_heatmap, 1)
 
         # add the latest heatmap for averaging and in history
         self.average_heatmap += self.current_heatmap
@@ -49,7 +49,7 @@ class VehicleDetector:
         # it's important to leave original average_heatmap unchanged
         # so, it will be possible to track ALL latest predictions
         heatmap_copy = np.copy(self.average_heatmap)
-        self.apply_threshold(heatmap_copy, len(self.heatmap_history)*0.5)
+        self.apply_threshold(heatmap_copy, len(self.heatmap_history))
         return label(heatmap_copy)
 
         # Visualize the heatmap when displaying
