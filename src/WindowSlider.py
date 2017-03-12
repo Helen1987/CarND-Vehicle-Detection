@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-from .FeatureExtractor import FeatureExtractor
 
 
 class WindowSlider:
@@ -15,7 +14,7 @@ class WindowSlider:
 
     # find all windows in region with specified overlap
     # assume that region is scaled already
-    def slide_window(self, region_shape, xy_overlap=(0.5, 0.5)):
+    def slide_window(self, region_shape, xy_overlap=(0.75, 0.75)):
         window_list = []
 
         # Instead of overlap, define how many cells to step
@@ -103,6 +102,7 @@ class WindowSlider:
                 ])
 
     def find_cars(self, img):
+        self.bounding_boxes = []
         scale_and_region = [
             [1.0, (300, img.shape[1]-300), (380, 450)],
             [1.5, (0, img.shape[1]), (350, 550)],

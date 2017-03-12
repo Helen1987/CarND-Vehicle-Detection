@@ -15,7 +15,7 @@ class Video:
         self.path = path
         self.output_folder = os.path.join(os.getcwd(), output_folder)
         self.vehicle_detector = VehicleDetector(
-            WindowSlider(transformer, svm_classifier, feature_extractor))
+            WindowSlider(transformer, svm_classifier, feature_extractor), 5)
 
     def handle_frame(self, image):
         try:
@@ -35,6 +35,7 @@ class Video:
     def process(self, mtx, dist):
         project_video = VideoFileClip(self.path)
         Frame.init(project_video.size[0], project_video.size[1], mtx, dist)
+        self.vehicle_detector.init_heatmap(project_video.size[0], project_video.size[1])
 
         new_video = project_video.fl_image(self.handle_frame)
         output_file_name = os.path.join(self.output_folder, "result_" + self.path)

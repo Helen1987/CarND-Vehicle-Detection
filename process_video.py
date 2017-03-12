@@ -13,7 +13,9 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         'output_folder',
+        nargs='?',
         type=str,
+        default='result_video',
         help='Folder to save the final video'
     )
     parser.add_argument(
