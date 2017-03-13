@@ -14,7 +14,7 @@ class WindowSlider:
 
     # find all windows in region with specified overlap
     # assume that region is scaled already
-    def slide_window(self, region_shape, xy_overlap=(0.75, 0.75)):
+    def slide_window(self, region_shape, xy_overlap):
         window_list = []
 
         # Instead of overlap, define how many cells to step
@@ -105,11 +105,12 @@ class WindowSlider:
         self.bounding_boxes = []
         scale_and_region = [
             [1.0, (300, img.shape[1]-300), (380, 450)],
-            [1.5, (0, img.shape[1]), (350, 550)],
-            [2.0, (0, img.shape[1]), (350, 650)]
+            [1.3, (0, img.shape[1]), (400, 580)],
+            [1.5, (0, img.shape[1]), (400, 600)],
+            [2.0, (0, img.shape[1]), (380, 650)]
             ]
         converted_image = self.extractor.convert(img)
         for scale, x_region, y_region in scale_and_region:
-            self.find_hot_windows(scale, converted_image, x_region, y_region)
+            self.find_hot_windows(scale, converted_image, x_region, y_region, xy_overlap=(0.75, 0.75))
 
         return self.bounding_boxes

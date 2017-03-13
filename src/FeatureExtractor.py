@@ -17,7 +17,7 @@ class FeatureExtractor:
         # space features
         self.spatial_size = 32
         # color features
-        self.hist_bins = 32
+        self.hist_bins = 16
         self.hist_range = (0, 256)
         # to keep precalculated hog features
         self.hog_features = []
@@ -84,42 +84,42 @@ class FeatureExtractor:
                 visualise=vis, feature_vector=feature_vec)
             return features
 
+    '''
+    Extract features from list of images
+        features_selector (color, space, hog)
+    '''
     @staticmethod
-    def extract_hog_features_from_images(images, cspace, orient, pix_per_cell, cell_per_block, hog_channel):
+    def extract_features_from_images(
+            features_selector, images, color_space='RGB',
+            spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256),
+            orient=9, pix_per_cell=8, cell_per_block=2, hog_channel='ALL'):
+
         features = []
+        spatial_features = np.array([])
+        hist_features = np.array([])
+        hog_features = np.array([])
         for file in images:
             image = cv2.imread(file)
             rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            feature_image = FeatureExtractor.convert_color(rgb_image, color_space)
 
-            feature_image = FeatureExtractor.convert_color(rgb_image, cspace)
-            if hog_channel == 'ALL':
-                hog_features = []
-                for channel in range(feature_image.shape[2]):
-                    hog_features.append(FeatureExtractor.get_hog_features(
-                        feature_image[:, :, channel], orient, pix_per_cell, cell_per_block))
-                hog_features = np.ravel(hog_features)
-            else:
-                hog_features = FeatureExtractor.get_hog_features(
-                    feature_image[:, :, hog_channel], orient, pix_per_cell, cell_per_block)
+            if features_selector[0]:
+                hist_features = FeatureExtractor.color_hist(feature_image, n_bins=hist_bins, bins_range=hist_range)
+            if features_selector[1]:
+                spatial_features = FeatureExtractor.bin_spatial(feature_image, size=spatial_size)
+            if features_selector[2]:
+                if hog_channel == 'ALL':
+                    hog_features = []
+                    for channel in range(feature_image.shape[2]):
+                        hog_features.append(FeatureExtractor.get_hog_features(
+                            feature_image[:, :, channel], orient, pix_per_cell, cell_per_block))
+                    hog_features = np.ravel(hog_features)
+                else:
+                    hog_features = FeatureExtractor.get_hog_features(
+                        feature_image[:, :, hog_channel], orient, pix_per_cell, cell_per_block)
 
-            features.append(hog_features)
+            features.append(np.concatenate((spatial_features, hist_features, hog_features)))
 
-        return features
-
-    @staticmethod
-    def extract_features_from_images(imgs, cspace='RGB', spatial_size=(32, 32), hist_bins=32, hist_range=(0, 256)):
-        features = []
-        for file in imgs:
-            image = cv2.imread(file)
-            rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-            feature_image = FeatureExtractor.convert_color(rgb_image, cspace)
-            # Apply bin_spatial() to get spatial color features
-            spatial_features = FeatureExtractor.bin_spatial(feature_image, size=spatial_size)
-            # Apply color_hist() also with a color space option now
-            hist_features = FeatureExtractor.color_hist(feature_image, n_bins=hist_bins, bins_range=hist_range)
-
-            features.append(np.concatenate((spatial_features, hist_features)))
         return features
 
     def convert(self, image):
@@ -166,4 +166,4 @@ class FeatureExtractor:
             hog_features = self.extract_precalculated_hog_features(
                 y_pos, x_pos, n_blocks_per_window)
 
-        return np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1)
+        return np.concatenate((spatial_features, hist_features, hog_features))
