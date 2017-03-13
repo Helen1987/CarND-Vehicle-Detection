@@ -35,7 +35,7 @@ class VehicleDetector:
         self.add_heat(box_list)
 
         # remove noise
-        self.apply_threshold(self.current_heatmap, 5)
+        self.apply_threshold(self.current_heatmap, 6)
 
         # add the latest heatmap for averaging and in history
         self.average_heatmap += self.current_heatmap

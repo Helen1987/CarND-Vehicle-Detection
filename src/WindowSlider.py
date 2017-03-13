@@ -105,6 +105,7 @@ class WindowSlider:
         self.bounding_boxes = []
         scale_and_region = [
             [1.0, (300, img.shape[1]-300), (380, 450)],
+            [1.2, (0, img.shape[1]), (380, 530)],
             [1.3, (0, img.shape[1]), (400, 580)],
             [1.5, (0, img.shape[1]), (400, 600)],
             [2.0, (0, img.shape[1]), (380, 650)]
