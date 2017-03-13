@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.image as mpimg
 import cv2
 from skimage.feature import hog
 
@@ -36,21 +35,6 @@ class FeatureExtractor:
         self.hist_bins = hist_bins
         self.hist_range = hist_range
 
-    def extract_features(self, img, ypos, xpos, n_blocks_per_window):
-        spatial_features = np.array([])
-        hist_features = np.array([])
-        hog_features = np.array([])
-
-        if self.use_space:
-            spatial_features = FeatureExtractor.bin_spatial(img, (self.spatial_size, self.spatial_size))
-        if self.use_color:
-            hist_features = FeatureExtractor.color_hist(img, self.hist_bins, self.hist_range)
-        if self.use_HOG:
-            hog_features = self.get_precalculated_hog_features(
-                ypos, xpos, n_blocks_per_window)
-
-        return np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1)
-
     @staticmethod
     def convert_color(image, color_space):
         if color_space != 'RGB':
@@ -67,9 +51,6 @@ class FeatureExtractor:
         else:
             feature_image = np.copy(image)
         return feature_image
-
-    def convert(self, image):
-        return FeatureExtractor.convert_color(image, self.color_space)
 
     @staticmethod
     def bin_spatial(img, size=(32, 32)):
@@ -103,36 +84,8 @@ class FeatureExtractor:
                 visualise=vis, feature_vector=feature_vec)
             return features
 
-    def get_precalculated_hog_features(self, y_pos, x_pos, n_cells_per_window):
-        shift = n_cells_per_window-(self.cell_per_block-1)
-        if self.hog_channel == 'ALL':
-            hog_feat1 = self.hog_features[0][y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
-            hog_feat2 = self.hog_features[1][y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
-            hog_feat3 = self.hog_features[2][y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
-            hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
-        else:
-            hog_features = self.hog_features[y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
-        return hog_features
-
-    def extract_hog_features_from_img(self, img):
-        if self.hog_channel == 'ALL':
-            self.hog_features = [None, None, None]
-            self.hog_features[0] = FeatureExtractor.get_hog_features(
-                img[:, :, 0], self.orient, self.pix_per_cell,
-                self.cell_per_block, vis=False, feature_vec=False)
-            self.hog_features[1] = FeatureExtractor.get_hog_features(
-                img[:, :, 1], self.orient, self.pix_per_cell,
-                self.cell_per_block, vis=False, feature_vec=False)
-            self.hog_features[2] = FeatureExtractor.get_hog_features(
-                img[:, :, 2], self.orient, self.pix_per_cell,
-                self.cell_per_block, vis=False, feature_vec=False)
-        else:
-            self.hog_features = FeatureExtractor.get_hog_features(
-                img[:, :, self.hog_channel], self.orient,
-                self.pix_per_cell, self.cell_per_block, vis=False, feature_vec=False)
-
     @staticmethod
-    def extract_hog_features(images, cspace, orient, pix_per_cell, cell_per_block, hog_channel):
+    def extract_hog_features_from_images(images, cspace, orient, pix_per_cell, cell_per_block, hog_channel):
         features = []
         for file in images:
             image = cv2.imread(file)
@@ -168,3 +121,49 @@ class FeatureExtractor:
 
             features.append(np.concatenate((spatial_features, hist_features)))
         return features
+
+    def convert(self, image):
+        return FeatureExtractor.convert_color(image, self.color_space)
+
+    def extract_precalculated_hog_features(self, y_pos, x_pos, n_cells_per_window):
+        shift = n_cells_per_window-(self.cell_per_block-1)
+        if self.hog_channel == 'ALL':
+            hog_feat1 = self.hog_features[0][y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
+            hog_feat2 = self.hog_features[1][y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
+            hog_feat3 = self.hog_features[2][y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
+            hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+        else:
+            hog_features = self.hog_features[y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
+        return hog_features
+
+    def prepare_hog_features(self, img):
+        if self.hog_channel == 'ALL':
+            self.hog_features = [None, None, None]
+            self.hog_features[0] = FeatureExtractor.get_hog_features(
+                img[:, :, 0], self.orient, self.pix_per_cell,
+                self.cell_per_block, feature_vec=False)
+            self.hog_features[1] = FeatureExtractor.get_hog_features(
+                img[:, :, 1], self.orient, self.pix_per_cell,
+                self.cell_per_block, feature_vec=False)
+            self.hog_features[2] = FeatureExtractor.get_hog_features(
+                img[:, :, 2], self.orient, self.pix_per_cell,
+                self.cell_per_block, feature_vec=False)
+        else:
+            self.hog_features = FeatureExtractor.get_hog_features(
+                img[:, :, self.hog_channel], self.orient,
+                self.pix_per_cell, self.cell_per_block, feature_vec=False)
+
+    def extract_features(self, img, y_pos, x_pos, n_blocks_per_window):
+        spatial_features = np.array([])
+        hist_features = np.array([])
+        hog_features = np.array([])
+
+        if self.use_space:
+            spatial_features = FeatureExtractor.bin_spatial(img, (self.spatial_size, self.spatial_size))
+        if self.use_color:
+            hist_features = FeatureExtractor.color_hist(img, self.hist_bins, self.hist_range)
+        if self.use_HOG:
+            hog_features = self.extract_precalculated_hog_features(
+                y_pos, x_pos, n_blocks_per_window)
+
+        return np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1)

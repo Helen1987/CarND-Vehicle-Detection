@@ -76,7 +76,7 @@ class WindowSlider:
         scaled_image = self.get_scaled_image_region(converted_image, scale, x_start_stop, y_start_stop)
 
         # pre-calculate HOG features
-        self.extractor.extract_hog_features_from_img(scaled_image)
+        self.extractor.prepare_hog_features(scaled_image)
 
         windows = self.slide_window(scaled_image.shape, xy_overlap=xy_overlap)
         win_draw = np.int(self.window*scale)
