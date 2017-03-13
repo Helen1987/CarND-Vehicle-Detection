@@ -106,9 +106,9 @@ class FeatureExtractor:
     def get_precalculated_hog_features(self, y_pos, x_pos, n_cells_per_window):
         shift = n_cells_per_window-(self.cell_per_block-1)
         if self.hog_channel == 'ALL':
-            hog_feat1 = self.hog_features[0, y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
-            hog_feat2 = self.hog_features[1, y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
-            hog_feat3 = self.hog_features[2, y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
+            hog_feat1 = self.hog_features[0][y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
+            hog_feat2 = self.hog_features[1][y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
+            hog_feat3 = self.hog_features[2][y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
             hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
         else:
             hog_features = self.hog_features[y_pos:y_pos+shift, x_pos:x_pos+shift].ravel()
@@ -126,10 +126,6 @@ class FeatureExtractor:
             self.hog_features[2] = FeatureExtractor.get_hog_features(
                 img[:, :, 2], self.orient, self.pix_per_cell,
                 self.cell_per_block, vis=False, feature_vec=False)
-            #if feature_vec:
-            #    self.hog_features = np.ravel(np.append((hog_feat1, hog_feat2, hog_feat3)))
-            #else:
-            #self.hog_features = np.vstack((hog_feat1, hog_feat2, hog_feat3))
         else:
             self.hog_features = FeatureExtractor.get_hog_features(
                 img[:, :, self.hog_channel], self.orient,
@@ -143,8 +139,16 @@ class FeatureExtractor:
             rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
             feature_image = FeatureExtractor.convert_color(rgb_image, cspace)
-            hog_features = FeatureExtractor.get_hog_features(
-                feature_image[:, :, hog_channel], orient, pix_per_cell, cell_per_block)
+            if hog_channel == 'ALL':
+                hog_features = []
+                for channel in range(feature_image.shape[2]):
+                    hog_features.append(FeatureExtractor.get_hog_features(
+                        feature_image[:, :, channel], orient, pix_per_cell, cell_per_block))
+                hog_features = np.ravel(hog_features)
+            else:
+                hog_features = FeatureExtractor.get_hog_features(
+                    feature_image[:, :, hog_channel], orient, pix_per_cell, cell_per_block)
+
             features.append(hog_features)
 
         return features
