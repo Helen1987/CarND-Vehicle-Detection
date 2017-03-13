@@ -44,7 +44,7 @@ if __name__ == '__main__':
     if features[1]:  # space features
         spatial_size = svc_pickle["spatial"]
         feature_extractor.init_space_parameters(spatial_size)
-    if features[2]:
+    if features[2]:  # hog features
         orient = svc_pickle["orient"]
         pix_per_cell = svc_pickle["pix_per_cell"]
         cell_per_block = svc_pickle["cell_per_block"]
