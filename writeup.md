@@ -30,15 +30,15 @@ The goals / steps of this project are the following:
 ###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
-###Writeup / README
+### Writeup / README
 
-####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.
+#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.
 
 You're reading it!
 
-###Histogram of Oriented Gradients (HOG)
+### Histogram of Oriented Gradients (HOG)
 
-####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
+#### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
 The code for creating classifier you can find in [jupyter notebook](/research/Classifier.ipynb). The code which extract features from the images you can find in [`FeatureExtractor` class](src/FeatureExtractor.py).
 
@@ -46,11 +46,11 @@ I started by reading in all the `vehicle` and `non-vehicle` images. As a startin
 
 ![alt text][hog]
 
-####2. Explain how you settled on your final choice of HOG parameters.
+#### 2. Explain how you settled on your final choice of HOG parameters.
 
 I tried different colorspaces and end up using HSV over "ALL" channels with `orient = 9`, `pix_per_cell = 8`, `cell_per_block = 2`. I was able to reach accuracy 0.987. 
 
-####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
+#### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
 It was possible to use other features for classifier. I decided that spatial features reflect similar concept as HOG features, as result not much help in using it. At the same time histogram features inspect totally different aspect of car\non-car images, so I decided to add histogram features with `histbin = 16` to my classifier.
 
@@ -68,9 +68,9 @@ To train classifier I divided features into train and test set via `train_test_s
 
 Eventually, I was able to reach 0.9904 accuracy.
 
-###Sliding Window Search
+### Sliding Window Search
 
-####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
+#### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
 To identify regions of search for my classifier I examined test images and tried to find an appropriate scale (check [jupyter notebook](/research/Region%20and%20Scale.ipynb)).I ended up with next regions:
 
@@ -80,7 +80,7 @@ To identify regions of search for my classifier I examined test images and tried
 ![alt text][reg4]
 ![alt text][reg5]
 
-####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
+#### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
 Ultimately I searched on 5 scales using HSV 3-channel HOG features plus histograms of color in the feature vector, which provided a nice result. Here are some example images:
 
@@ -94,11 +94,11 @@ Performance is too slow. I [precalculated HOG features](/src/FeatureExtractor.py
 
 ### Video Implementation
 
-####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
 
 Here's a [link to my video result](https://www.youtube.com/watch?v=c6c7OA39n-A)
 
-####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
+#### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
 I extracted the positions of positive detections in each frame of the video. You can find code in [`WindowSlider` class](/src/WindowSlider.py). From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions (check code in [`VehicleDetector` class](src/VehicleDetector.py)). In my case I applied threshold of 6 detections.
 
@@ -117,9 +117,9 @@ Afterwards, I used `scipy.ndimage.measurements.label()` to identify individual b
 
 ---
 
-###Discussion
+### Discussion
 
-####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 The largets issue with my pipeline is performance. For 1 minutes video I have 20 minutes of processing. It is not allowed for for self-driving car which must identify vehicles in real-time.
 
