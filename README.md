@@ -29,6 +29,14 @@ Here are links to the labeled data for [vehicle](https://s3.amazonaws.com/udacit
 * [hog_color.pkl](/hog_color.pkl), [hog.pkl](/hog.pkl), [sparse_color.pkl](/sparse_color.pkl) classifiers for pipeline (I use *hog_color.pkl*)
 * [dist_pickle.p](/dist_pickle.p) is used to undistort the image
 
+To start video processing you have to run following command:
+
+```
+python process_video.py "project_video.mp4" "result_video" "hog_color.pkl"
+```
+
+As a result you will get a video with name *result_project_video.mp4* in *result_video* folder
+
 ### Result video
 
 You can find [here](https://www.youtube.com/watch?v=c6c7OA39n-A)
