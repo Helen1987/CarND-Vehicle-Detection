@@ -2,7 +2,7 @@
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
 [//]: # (Image References)
-[final]: ./examples/final2.jpg "Result image"
+[final]: ./examples/final1.jpg "Result image"
 
 In this project, the goal is to write a software pipeline to detect vehicles in a video (start with the test_video.mp4 and later implement on full project_video.mp4), but the main output or product we want you to create is a detailed writeup of the project.  Check out the [writeup](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup.md) for this project.  
 
